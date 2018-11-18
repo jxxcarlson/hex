@@ -29,3 +29,20 @@ Just "FF66" : Maybe String
 > Hex.toBytes "FF66!!" |> Maybe.map Hex.fromBytes
 Nothing : Maybe String
 ```
+
+## Notes
+
+The function `Hex.toBytes` is case-insensitive
+
+```
+ > Hex.toBytes "ff66" |> Maybe.map Hex.fromBytes
+Just "FF66"
+```
+
+If you prefer lower-case output from `Hex.fromBytes`,
+you can do as in this example:
+
+```
+> Hex.toBytes "ff66" |> Maybe.map Hex.fromBytes |> Maybe.map String.toLower
+Just "ff66" : Maybe String
+```

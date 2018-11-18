@@ -95,11 +95,17 @@ intOfHexDigit str =
   else 
     case str of 
        "A" -> Just 10
+       "a" -> Just 10
        "B" -> Just 11
+       "b" -> Just 11
        "C" -> Just 12
+       "c" -> Just 12
        "D" -> Just 13
+       "d" -> Just 13
        "E" -> Just 14
+       "e" -> Just 14
        "F" -> Just 15
+       "f" -> Just 15
        _ -> Nothing
 
 {-| intOfHexPair "F7" == Just 247
