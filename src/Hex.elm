@@ -1,24 +1,33 @@
-module Hex exposing(fromBytes, byteOfHexPair, stringPairListOfString, byteListOfString, hexStringOfInt, intOfHexDigit, intOfHexPair)
+module Hex exposing(fromBytes, toBytes)
 
-{-|  The function call `hex someBytes` gives 
-a hexadecimal view of the contents of 
-`someBytes : Bytes`.
+{-|  The Hex package exposes two functions
 
-@docs decode
+- fromBytes : Bytes -> String 
+- toBytes : String -> Maybe Bytes
+
+The first gives a hexadecimal representation of a Bytes, value, e.g.,
+something like `"6A45F2"`.  The second takes a string like the one
+just given and returns a value of type `Maybe Bytes`.  Such a function
+call can fail, e.g., on an input `"6A45F!"`. 
+
+@docs fromBytes, toBytes
 -}
 
 import Bytes exposing (Bytes, Endianness(..))
 import Bytes.Decode as Decode exposing (Decoder, Step(..), loop,  map, succeed)
 import Bytes.Encode as Encode exposing(encode)
 
-{- 
-
-In the examples below, assume the same imports as above
-
--}
 
 
-{-| encode (Encode.string "Hello") |> Hex.fromBytes == "48656C6C6F" 
+{-| Hex.toBytes "FF66" |> Maybe.map Hex.fromBytes == Just "FF66"
+
+> import Bytes.Encode as Encode exposing(encode)
+> encode (Encode.string "Hello") |> Hex.fromBytes
+"48656C6C6F" : String
+
+> Hex.toBytes "FF66!!" |> Maybe.map Hex.fromBytes
+Nothing : Maybe String
+
 -}
 fromBytes : Bytes -> String 
 fromBytes bytes_ = 
@@ -27,6 +36,16 @@ fromBytes bytes_ =
     |> Maybe.map (List.reverse >> (List.map hexStringOfInt) >> String.join "")
     |> Maybe.withDefault "Error"
 
+
+{-| Hex.toBytes "FF66" |> Maybe.map Hex.fromBytes == Just "FF66"
+-}
+toBytes str = 
+  Maybe.map encode (toBytesEncoder str)
+
+
+--
+-- NOT EXPOSED 
+--
 
 decodeBytes : Int -> Decoder a -> Decoder (List a)
 decodeBytes len decoder = 
@@ -94,11 +113,10 @@ intOfHexPair str =
   in
   Maybe.map2 (+) hi lo
 
-{-| byteOfHexPair "48" |> Maybe.map Hex.fromBytes == Just "48"
--}
-byteOfHexPair : String -> Maybe Bytes
-byteOfHexPair str = 
-  Maybe.map encode (Maybe.map Encode.unsignedInt8 (intOfHexPair str))
+
+encodeByteOfHexPair : String -> Maybe Encode.Encoder
+encodeByteOfHexPair str = 
+  Maybe.map Encode.unsignedInt8 (intOfHexPair str)
 
 
 stringPairListOfString : String -> List String   
@@ -108,17 +126,27 @@ stringPairListOfString str =
     |> groupsOf 2 
     |> List.map (String.join "")
 
-byteListOfString : String -> Maybe (List Bytes)
-byteListOfString str = 
+byteListOfStringEncoder : String ->  Maybe (List Encode.Encoder)
+byteListOfStringEncoder str = 
   str 
     |> stringPairListOfString
-    |> List.map byteOfHexPair
+    |> List.map encodeByteOfHexPair
     |> combine
    
+
+toBytesEncoder : String ->  Maybe Encode.Encoder
+toBytesEncoder str = 
+   Maybe.map Encode.sequence (byteListOfStringEncoder str)
+
+
+--
+-- The following two functions are from List.Extra
+--
 
 groupsOf : Int -> List a -> List (List a)
 groupsOf size xs =
   groupsOfWithStep size size xs
+
 
 groupsOfWithStep : Int -> Int -> List a -> List (List a)
 groupsOfWithStep size step xs =
@@ -140,6 +168,11 @@ groupsOfWithStep size step xs =
 
     else
     []
+
+
+--
+-- The following two functions are from Maybe.Extra
+--
 
 traverse : (a -> Maybe b) -> List a -> Maybe (List b)
 traverse f =
