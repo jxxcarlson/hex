@@ -1,25 +1,31 @@
 # Hex
 
 Hex is a small package for working with `elm/bytes`.
-It exposes three functions.
+It exposes two functions.
 
-- `encodeString : String -> Bytes`
-- `decodeString : Bytes -> Maybe String`
-- `hex : Bytes -> Maybe String`
+- `fromBytes : Bytes -> String`
+- `toBytes : String -> Maybe Bytes`
 
-The main function is `hex`:
+The first function gives a hexadecimal representation of a Bytes, value, e.g.,
+something like `"6A45F2"`. The second takes a string like the one
+just given and returns a value of type `Maybe Bytes`. Such a function
+call can fail, e.g., on an input `"6A45F!"`.
+
+## Examples
+
+`Hex.toBytes "FF66" |> Maybe.map Hex.fromBytes == Just "FF66"`
 
 ```
 $ elm repl
 > import Hex exposing(..)
+> import Bytes.Encode as Encode exposing(encode)
 
-> encodeString "Hello" |> hex
-Just "48656C6C6F" : Maybe String
-```
+> encode (Encode.string "Hello") |> Hex.fromBytes
+"48656C6C6F" : String
 
-The `decodeString` function may also be useful for testing:
+> Hex.toBytes "FF66" |> Maybe.map Hex.fromBytes
+Just "FF66" : Maybe String
 
-```
-> encodeString "$20$" |> decodeString
-Just "$20$" : Maybe String
+> Hex.toBytes "FF66!!" |> Maybe.map Hex.fromBytes
+Nothing : Maybe String
 ```
