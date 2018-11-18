@@ -1,4 +1,4 @@
-module Hex exposing(decode, hexStringOfInt, intOfHexDigit, intOfHexPair)
+module Hex exposing(fromBytes, byteOfHexPair, stringPairListOfString, byteListOfString, hexStringOfInt, intOfHexDigit, intOfHexPair)
 
 {-|  The function call `hex someBytes` gives 
 a hexadecimal view of the contents of 
@@ -11,32 +11,52 @@ import Bytes exposing (Bytes, Endianness(..))
 import Bytes.Decode as Decode exposing (Decoder, Step(..), loop,  map, succeed)
 import Bytes.Encode as Encode exposing(encode)
 
+{- 
 
-{-| Encode.encode (Encode.string "Hello") |> Hex.decode == "48656C6C6F" 
+In the examples below, assume the same imports as above
+
 -}
-decode : Bytes -> String 
-decode bytes_ = 
+
+
+{-| encode (Encode.string "Hello") |> Hex.fromBytes == "48656C6C6F" 
+-}
+fromBytes : Bytes -> String 
+fromBytes bytes_ = 
   bytes_  
     |> Decode.decode (decodeBytes (Bytes.width bytes_) Decode.unsignedInt8)
     |> Maybe.map (List.reverse >> (List.map hexStringOfInt) >> String.join "")
     |> Maybe.withDefault "Error"
 
 
+decodeBytes : Int -> Decoder a -> Decoder (List a)
+decodeBytes len decoder = 
+  loop (len, []) (listStep decoder)
 
+
+listStep : Decoder a -> (Int, List a) -> Decoder (Step (Int, List a) (List a))
+listStep decoder (n, xs) =
+  if n <= 0 then
+    succeed (Done xs)
+  else
+    map (\x -> Loop (n - 1, x :: xs)) decoder
+
+
+{- String (Hex Representation) <-> Int conversions -}
 
 stringOfHexDigit : Int -> String  
 stringOfHexDigit n = 
   if n < 10 then 
-    String.fromInt n 
+    String.fromInt n
   else 
   case n of 
-    10 -> "A"
-    11 -> "B"
-    12 -> "C"
-    13 -> "D"
-    14 -> "E"
-    15 -> "F"
+    10 ->  "A"
+    11 ->  "B"
+    12 ->  "C"
+    13 ->  "D"
+    14 ->  "E"
+    15 ->  "F"
     _ -> "X" 
+
 
 {-|  hexStringOfInt 247 == "F7"
 -}
@@ -50,7 +70,7 @@ hexStringOfInt b =
   
 intOfHexDigit : String -> Maybe Int
 intOfHexDigit str = 
-  if List.member str ["0", "1", "2", "3", "4", "5", "6", "7", "9", "9"] then 
+  if List.member str ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] then 
     String.toInt str  
   else 
     case str of 
@@ -73,16 +93,73 @@ intOfHexPair str =
     lo = intOfHexDigit (String.right 1 str)
   in
   Maybe.map2 (+) hi lo
-    
 
-decodeBytes : Int -> Decoder a -> Decoder (List a)
-decodeBytes len decoder = 
-  loop (len, []) (listStep decoder)
+{-| byteOfHexPair "48" |> Maybe.map Hex.fromBytes == Just "48"
+-}
+byteOfHexPair : String -> Maybe Bytes
+byteOfHexPair str = 
+  Maybe.map encode (Maybe.map Encode.unsignedInt8 (intOfHexPair str))
 
 
-listStep : Decoder a -> (Int, List a) -> Decoder (Step (Int, List a) (List a))
-listStep decoder (n, xs) =
-  if n <= 0 then
-    succeed (Done xs)
-  else
-    map (\x -> Loop (n - 1, x :: xs)) decoder
+stringPairListOfString : String -> List String   
+stringPairListOfString str = 
+  str 
+    |> String.split "" 
+    |> groupsOf 2 
+    |> List.map (String.join "")
+
+byteListOfString : String -> Maybe (List Bytes)
+byteListOfString str = 
+  str 
+    |> stringPairListOfString
+    |> List.map byteOfHexPair
+    |> combine
+   
+
+groupsOf : Int -> List a -> List (List a)
+groupsOf size xs =
+  groupsOfWithStep size size xs
+
+groupsOfWithStep : Int -> Int -> List a -> List (List a)
+groupsOfWithStep size step xs =
+    let
+        thisGroup =
+            List.take size xs
+
+        xs_ =
+            List.drop step xs
+
+        okayArgs =
+            size > 0 && step > 0
+
+        okayLength =
+            size == List.length thisGroup
+    in
+    if okayArgs && okayLength then
+        thisGroup :: groupsOfWithStep size step xs_
+
+    else
+    []
+
+traverse : (a -> Maybe b) -> List a -> Maybe (List b)
+traverse f =
+    let
+        step e acc =
+            case f e of
+                Nothing ->
+                    Nothing
+
+                Just x ->
+                    Maybe.map ((::) x) acc
+    in
+    List.foldr step (Just [])
+
+
+{-| Take a list of `Maybe`s and return a `Maybe` with a list of values. `combine == traverse identity`.
+    combine [] == Just []
+    combine [ Just 1, Just 2, Just 3 ] == Just [ 1, 2, 3 ]
+    combine [ Just 1, Nothing, Just 3 ] == Nothing
+-}
+combine : List (Maybe a) -> Maybe (List a)
+combine =
+  traverse identity
