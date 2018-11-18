@@ -39,6 +39,7 @@ fromBytes bytes_ =
 
 {-| Hex.toBytes "FF66" |> Maybe.map Hex.fromBytes == Just "FF66"
 -}
+toBytes : String -> Maybe Bytes
 toBytes str = 
   Maybe.map encode (toBytesEncoder str)
 
