@@ -19,6 +19,8 @@ to "format" output into blocks.
 import Bytes exposing (Bytes, Endianness(..))
 import Bytes.Decode as Decode exposing (Decoder, Step(..), loop, map, succeed)
 import Bytes.Encode as Encode exposing (encode)
+import Maybe.Extra
+import List.Extra
 
 
 {-| Hex.toBytes "FF66" |> Maybe.map Hex.fromBytes == Just "FF66"
@@ -55,7 +57,7 @@ stringBlocks : Int -> String -> List String
 stringBlocks blockSize str =
     str
         |> String.split ""
-        |> groupsOf blockSize
+        |> List.Extra.groupsOf blockSize
         |> List.map (String.join "")
 
 
@@ -197,7 +199,7 @@ stringPairListOfString : String -> List String
 stringPairListOfString str =
     str
         |> String.split ""
-        |> groupsOf 2
+        |> List.Extra.groupsOf 2
         |> List.map (String.join "")
 
 
@@ -206,74 +208,9 @@ byteListOfStringEncoder str =
     str
         |> stringPairListOfString
         |> List.map encodeByteOfHexPair
-        |> combine
+        |> Maybe.Extra.combine
 
 
 toBytesEncoder : String -> Maybe Encode.Encoder
 toBytesEncoder str =
     Maybe.map Encode.sequence (byteListOfStringEncoder str)
-
-
-
---
--- STRING UTILITY
---
---
--- The following two functions are from List.Extra
---
-
-
-groupsOf : Int -> List a -> List (List a)
-groupsOf size xs =
-    groupsOfWithStep size size xs
-
-
-groupsOfWithStep : Int -> Int -> List a -> List (List a)
-groupsOfWithStep size step xs =
-    let
-        thisGroup =
-            List.take size xs
-
-        xs_ =
-            List.drop step xs
-
-        okayArgs =
-            size > 0 && step > 0
-
-        okayLength =
-            size == List.length thisGroup
-    in
-        if okayArgs && okayLength then
-            thisGroup :: groupsOfWithStep size step xs_
-        else
-            []
-
-
-
---
--- The following two functions are from Maybe.Extra
---
-
-
-traverse : (a -> Maybe b) -> List a -> Maybe (List b)
-traverse f =
-    let
-        step e acc =
-            case f e of
-                Nothing ->
-                    Nothing
-
-                Just x ->
-                    Maybe.map ((::) x) acc
-    in
-        List.foldr step (Just [])
-
-
-{-| Take a list of `Maybe`s and return a `Maybe` with a list of values. `combine == traverse identity`.
-combine [] == Just []
-combine [ Just 1, Just 2, Just 3 ] == Just [ 1, 2, 3 ]
-combine [ Just 1, Nothing, Just 3 ] == Nothing
--}
-combine : List (Maybe a) -> Maybe (List a)
-combine =
-    traverse identity
