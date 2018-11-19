@@ -1,16 +1,18 @@
-module Hex exposing (fromBytes, toBytes)
+module Hex exposing (fromBytes, toBytes, stringBlocks)
 
-{-| The Hex package exposes two functions
+{-| The Hex package exposes three functions
 
   - fromBytes : Bytes -> String
   - toBytes : String -> Maybe Bytes
+  - stringBlocks :
 
 The first gives a hexadecimal representation of a Bytes, value, e.g.,
 something like `"6A45F2"`. The second takes a string like the one
 just given and returns a value of type `Maybe Bytes`. Such a function
-call can fail, e.g., on an input `"6A45F!"`.
+call can fail, e.g., on an input `"6A45F!"`. The third is used
+to "format" output into blocks.
 
-@docs fromBytes, toBytes
+@docs fromBytes, toBytes, stringBlocks
 
 -}
 
@@ -42,6 +44,19 @@ fromBytes bytes_ =
 toBytes : String -> Maybe Bytes
 toBytes str =
     Maybe.map encode (toBytesEncoder str)
+
+
+{-|
+
+> "abcdefhij" |> stringBlocks 3
+> ["abc","def","hij"]
+-}
+stringBlocks : Int -> String -> List String
+stringBlocks blockSize str =
+    str
+        |> String.split ""
+        |> groupsOf blockSize
+        |> List.map (String.join "")
 
 
 
@@ -200,6 +215,9 @@ toBytesEncoder str =
 
 
 
+--
+-- STRING UTILITY
+--
 --
 -- The following two functions are from List.Extra
 --
