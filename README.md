@@ -1,15 +1,17 @@
 # Hex
 
 Hex is a small package for working with `elm/bytes`.
-It exposes two functions.
+It exposes three functions.
 
 - `fromBytes : Bytes -> String`
 - `toBytes : String -> Maybe Bytes`
+- `stringBlocks : Int -> String -> List String`
 
 The first function gives a hexadecimal representation of a Bytes, value, e.g.,
 something like `"6A45F2"`. The second takes a string like the one
 just given and returns a value of type `Maybe Bytes`. Such a function
-call can fail, e.g., on an input `"6A45F!"`.
+call can fail, e.g., on an input `"6A45F!"`. The third is useful
+for viewing long strings as blocks of shorter strings.
 
 ## Examples
 
@@ -28,6 +30,9 @@ Just "FF66" : Maybe String
 
 > Hex.toBytes "FF66!!" |> Maybe.map Hex.fromBytes
 Nothing : Maybe String
+
+> "abcdefghijklmnopqrstuvwx1234" |> Hex.stringBlocks 4
+["abcd","efgh","ijkl","mnop","qrst","uvwx","1234"]
 ```
 
 ## Notes
