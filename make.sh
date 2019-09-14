@@ -1,1 +1,1 @@
-elm make src/Hex/Bytes.elm
+elm make src/Hex/Convert.elm

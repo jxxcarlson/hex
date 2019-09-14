@@ -1,53 +1,62 @@
-# Hex.Bytes
+# Hex.Convert
 
-Hex.Bytes is a small package for working with `elm/bytes`.
+`Hex.Convert`
+is a small package for working with `elm/bytes`.
 It exposes three functions.
 
-- `from : Bytes -> String`
-- `to : String -> Maybe Bytes`
-- `stringBlocks : Int -> String -> List String`
+- `toString : Bytes -> String`
+- `toBytes : String -> Maybe Bytes`
+- `blocks : Int -> String -> List String`
 
-The first function gives a hexadecimal representation of a Bytes, value, e.g.,
-something like `"6A45F2"`. The second takes a string like the one
-just given and returns a value of type `Maybe Bytes`. Such a function
-call can fail, e.g., on an input `"6A45F!"`. The third is useful
-for viewing long strings as blocks of shorter strings.
+The `toString` function converts a `Bytes` value into
+its hexadecimal representation, assuming this exists. 
+For example,
+something like `"6A45F2"`. The `toBytes` function converts a string like 
+`"6A45F2"` to a value of type `Maybe Bytes`. Such a function
+call can fail, e.g., on the input `"6A45F!"`. The `blocks` function
+is useful for grouping a long string into shorter substrings of equal length.
+
 
 ## Examples
 
-`Hex.Bytes.to "FF66" |> Maybe.map Hex.Bytes.from == Just "FF66"`
+    Hex.Convert.toBytes "FF66"  
+        |> Maybe.map Hex.Convert.toString 
+    --> Just "FF66"`
 
-```
-$ elm repl
-> import Hex.Bytes exposing(..)
-> import Bytes.Encode as Encode exposing(encode)
+    $ elm repl
+    > import Hex.Convert
+    > import Bytes.Encode as Encode exposing(encode)
 
-> encode (Encode.string "Hello") |> Hex.Bytes.from
-"48656C6C6F" : String
+    > encode (Encode.string "Hello") 
+        |> Hex.Convert.toString
+    "48656C6C6F" : String
 
-> Hex.Bytes.to "FF66" |> Maybe.map Hex.Bytes.from
-Just "FF66" : Maybe String
+    > Hex.Convert.toBytes "FF66" 
+        |> Maybe.map Hex.Convert.toString
+    Just "FF66" : Maybe String
 
-> Hex.Bytes.to "FF66!!" |> Maybe.map Hex.Bytes.from
-Nothing : Maybe String
+    > Hex.Convert.toBytes "FF66!!" 
+        |> Maybe.map Hex.Convert.toString
+    Nothing : Maybe String
 
-> "abcdefghijklmnopqrstuvwx1234" |> Hex.Bytes.stringBlocks 4
-["abcd","efgh","ijkl","mnop","qrst","uvwx","1234"]
+    > "abcdefghijklmnopqrstuvwx1234" 
+        |> Hex.Convert.blocks 4
+    ["abcd","efgh","ijkl","mnop","qrst","uvwx","1234"]
 ```
 
 ## Notes
 
-The function `Hex.Bytes.to` is case-insensitive
+The function `Hex.Convert.toBytes` is case-insensitive. Thus
 
-```
- > Hex.Bytes.to "ff66" |> Maybe.map Hex.Bytes.from
-Just "FF66"
-```
+    Hex.Convert.toBytes "ff66" 
+        |> Maybe.map Hex.Convert.toString
+    --> Just "FF66"
 
-If you prefer lower-case output from `Hex.Bytes.from`,
+If you prefer lower-case output from `Hex.Convert.from`,
 you can do as in this example:
 
-```
-> Hex.Bytes.to "ff66" |> Maybe.map Hex.Bytes.from |> Maybe.map String.toLower
-Just "ff66" : Maybe String
-```
+    Hex.Convert.toBytes "ff66" 
+        |> Maybe.map Hex.Convert.toString 
+        |> Maybe.map String.toLower
+    --> Just "ff66" : Maybe String
+

@@ -1,18 +1,21 @@
-module Hex.Bytes exposing (from, to, stringBlocks)
+module Hex.Convert exposing (toString, toBytes, blocks)
 
-{-| The Hex package exposes three functions
+{-| The `Hex.Convert` package converts `Bytes` values to and from `String`
+values.  Three functions are exposed:
 
-  - fromBytes : Bytes -> String
-  - toBytes : String -> Maybe Bytes
-  - stringBlocks :
+  - `toString : Bytes -> String`
+  - `toBytes : String -> Maybe Bytes`
+  - `blocks : Int -> String -> List String`
 
-The first gives a hexadecimal representation of a Bytes, value, e.g.,
-something like `"6A45F2"`. The second takes a string like the one
-just given and returns a value of type `Maybe Bytes`. Such a function
-call can fail, e.g., on an input `"6A45F!"`. The third is used
-to "format" output into blocks.
+The `toString` function converts a `Bytes` value to
+a string of hexadecimal characters representing the `Bytes` value.
+The `toBytes` function converts a string to a value of type `Maybe Bytes`.
+This choice of return type is necessary to account for the fact
+that a function call can fail, e.g., on the input `"6A45F!"`.
+The `blocks` function is used to "format" the output
+of `toString` into blocks of a given number of characters.
 
-@docs from, to, stringBlocks
+@docs toBytes, toString, blocks
 
 -}
 
@@ -22,39 +25,46 @@ import Bytes.Encode as Encode exposing (encode)
 import List.Extra
 
 
-{-| Hex.toBytes "FF66" |> Maybe.map Hex.fromBytes == Just "FF66"
+{-|
+Do `import Bytes.Encode as Encode exposing(encode)`.  Then
 
-> import Bytes.Encode as Encode exposing(encode)
-> encode (Encode.string "Hello") |> Hex.fromBytes
-> "48656C6C6F" : String
+    encode (Encode.string "Hello")
+        |> Hex.Convert.toString
+    --> "48656C6C6F" : String
 
-> Hex.toBytes "FF66!!" |> Maybe.map Hex.fromBytes
-> Nothing : Maybe String
+    Hex.Convert.toBytes "FF66!!"
+        |> Maybe.map Hex.Convert.toString
+    --> Nothing : Maybe String
 
 -}
-from : Bytes -> String
-from bytes_ =
+toString : Bytes -> String
+toString bytes_ =
     bytes_
         |> Decode.decode (decodeBytes (Bytes.width bytes_) Decode.unsignedInt8)
         |> Maybe.map (List.reverse >> List.map hexStringOfInt >> String.join "")
         |> Maybe.withDefault "Error"
 
 
-{-| Hex.toBytes "FF66" |> Maybe.map Hex.fromBytes == Just "FF66"
+{-|
+    Hex.Convert.toBytes "FF66"
+        |> Maybe.map Hex.Convert.toString
+    --> Just "FF66"
 -}
-to : String -> Maybe Bytes
-to str =
+toBytes : String -> Maybe Bytes
+toBytes str =
     Maybe.map encode (toBytesEncoder str)
 
 
-{-|
+{-|  The `blocks` function is a general-purpose
+string utility which divides a string into blocks
+of characters, that is, a list of strings:
 
-> "abcdefhij" |> stringBlocks 3
-> ["abc","def","hij"]
+    "abcdefhij" |> Hex.Convert.blocks 3
+    --> ["abc","def","hij"]
 
 -}
-stringBlocks : Int -> String -> List String
-stringBlocks blockSize str =
+blocks : Int -> String -> List String
+blocks blockSize str =
     str
         |> String.split ""
         |> List.Extra.groupsOf blockSize
