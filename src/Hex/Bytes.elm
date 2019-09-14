@@ -1,4 +1,4 @@
-module Hex exposing (fromBytes, toBytes, stringBlocks)
+module Hex.Bytes exposing (fromBytes, toBytes, stringBlocks)
 
 {-| The Hex package exposes three functions
 
