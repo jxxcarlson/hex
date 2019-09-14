@@ -3,14 +3,15 @@
     "name": "jxxcarlson/hex",
     "summary": "hex view for bytes",
     "license": "BSD-3-Clause",
-    "version": "2.1.1",
+    "version": "2.1.3",
     "exposed-modules": [
         "Hex"
     ],
     "elm-version": "0.19.0 <= v < 0.20.0",
     "dependencies": {
         "elm/bytes": "1.0.3 <= v < 2.0.0",
-        "elm/core": "1.0.2 <= v < 2.0.0"
+        "elm/core": "1.0.2 <= v < 2.0.0",
+        "elm-community/list-extra": "8.1.0 <= v < 9.0.0"
     },
     "test-dependencies": {
         "elm-explorations/test": "1.1.0 <= v < 2.0.0"

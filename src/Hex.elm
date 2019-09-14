@@ -19,6 +19,7 @@ to "format" output into blocks.
 import Bytes exposing (Bytes, Endianness(..))
 import Bytes.Decode as Decode exposing (Decoder, Step(..), loop, map, succeed)
 import Bytes.Encode as Encode exposing (encode)
+import List.Extra
 
 
 {-| Hex.toBytes "FF66" |> Maybe.map Hex.fromBytes == Just "FF66"
@@ -35,7 +36,7 @@ fromBytes : Bytes -> String
 fromBytes bytes_ =
     bytes_
         |> Decode.decode (decodeBytes (Bytes.width bytes_) Decode.unsignedInt8)
-        |> Maybe.map (List.reverse >> (List.map hexStringOfInt) >> String.join "")
+        |> Maybe.map (List.reverse >> List.map hexStringOfInt >> String.join "")
         |> Maybe.withDefault "Error"
 
 
@@ -50,12 +51,13 @@ toBytes str =
 
 > "abcdefhij" |> stringBlocks 3
 > ["abc","def","hij"]
+
 -}
 stringBlocks : Int -> String -> List String
 stringBlocks blockSize str =
     str
         |> String.split ""
-        |> groupsOf blockSize
+        |> List.Extra.groupsOf blockSize
         |> List.map (String.join "")
 
 
@@ -74,6 +76,7 @@ listStep : Decoder a -> ( Int, List a ) -> Decoder (Step ( Int, List a ) (List a
 listStep decoder ( n, xs ) =
     if n <= 0 then
         succeed (Done xs)
+
     else
         map (\x -> Loop ( n - 1, x :: xs )) decoder
 
@@ -86,6 +89,7 @@ stringOfHexDigit : Int -> String
 stringOfHexDigit n =
     if n < 10 then
         String.fromInt n
+
     else
         case n of
             10 ->
@@ -121,159 +125,118 @@ hexStringOfInt b =
         low =
             modBy 16 b
     in
-        (stringOfHexDigit hi) ++ (stringOfHexDigit low)
+    stringOfHexDigit hi ++ stringOfHexDigit low
 
 
-intOfHexDigit : String -> Maybe Int
+intOfHexDigit : Char -> Maybe Int
 intOfHexDigit str =
-    if List.member str [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ] then
-        String.toInt str
-    else
-        case str of
-            "A" ->
-                Just 10
+    case str of
+        '0' ->
+            Just 0
 
-            "a" ->
-                Just 10
+        '1' ->
+            Just 1
 
-            "B" ->
-                Just 11
+        '2' ->
+            Just 2
 
-            "b" ->
-                Just 11
+        '3' ->
+            Just 3
 
-            "C" ->
-                Just 12
+        '4' ->
+            Just 4
 
-            "c" ->
-                Just 12
+        '5' ->
+            Just 5
 
-            "D" ->
-                Just 13
+        '6' ->
+            Just 6
 
-            "d" ->
-                Just 13
+        '7' ->
+            Just 7
 
-            "E" ->
-                Just 14
+        '8' ->
+            Just 8
 
-            "e" ->
-                Just 14
+        '9' ->
+            Just 9
 
-            "F" ->
-                Just 15
+        'A' ->
+            Just 10
 
-            "f" ->
-                Just 15
+        'a' ->
+            Just 10
 
-            _ ->
-                Nothing
+        'B' ->
+            Just 11
+
+        'b' ->
+            Just 11
+
+        'C' ->
+            Just 12
+
+        'c' ->
+            Just 12
+
+        'D' ->
+            Just 13
+
+        'd' ->
+            Just 13
+
+        'E' ->
+            Just 14
+
+        'e' ->
+            Just 14
+
+        'F' ->
+            Just 15
+
+        'f' ->
+            Just 15
+
+        _ ->
+            Nothing
 
 
-{-| intOfHexPair "F7" == Just 247
-intOfHexPair "F7" |> Maybe.map hexStringOfInt
+{-| intOfHexPair 'F' '7' == Just 247
+intOfHexPair 'F' '7' |> Maybe.map hexStringOfInt
 -}
-intOfHexPair : String -> Maybe Int
-intOfHexPair str =
+intOfHexPair : Char -> Char -> Maybe Int
+intOfHexPair highChar lowChar =
     let
         hi_ =
-            intOfHexDigit (String.left 1 str)
+            intOfHexDigit highChar
 
         hi =
             Maybe.map (\x -> 16 * x) hi_
 
         lo =
-            intOfHexDigit (String.right 1 str)
+            intOfHexDigit lowChar
     in
-        Maybe.map2 (+) hi lo
+    Maybe.map2 (+) hi lo
 
 
-encodeByteOfHexPair : String -> Maybe Encode.Encoder
-encodeByteOfHexPair str =
-    Maybe.map Encode.unsignedInt8 (intOfHexPair str)
+byteListOfStringEncoder : List Encode.Encoder -> List Char -> Maybe (List Encode.Encoder)
+byteListOfStringEncoder list charList =
+    case charList of
+        high :: low :: rest ->
+            case intOfHexPair high low of
+                Just value ->
+                    byteListOfStringEncoder (Encode.unsignedInt8 value :: list) rest
 
+                Nothing ->
+                    Nothing
 
-stringPairListOfString : String -> List String
-stringPairListOfString str =
-    str
-        |> String.split ""
-        |> groupsOf 2
-        |> List.map (String.join "")
+        [ _ ] ->
+            Nothing
 
-
-byteListOfStringEncoder : String -> Maybe (List Encode.Encoder)
-byteListOfStringEncoder str =
-    str
-        |> stringPairListOfString
-        |> List.map encodeByteOfHexPair
-        |> combine
+        [] ->
+            List.reverse list |> Just
 
 
 toBytesEncoder : String -> Maybe Encode.Encoder
 toBytesEncoder str =
-    Maybe.map Encode.sequence (byteListOfStringEncoder str)
-
-
-
---
--- STRING UTILITY
---
---
--- The following two functions are from List.Extra
---
-
-
-groupsOf : Int -> List a -> List (List a)
-groupsOf size xs =
-    groupsOfWithStep size size xs
-
-
-groupsOfWithStep : Int -> Int -> List a -> List (List a)
-groupsOfWithStep size step xs =
-    let
-        thisGroup =
-            List.take size xs
-
-        xs_ =
-            List.drop step xs
-
-        okayArgs =
-            size > 0 && step > 0
-
-        okayLength =
-            size == List.length thisGroup
-    in
-        if okayArgs && okayLength then
-            thisGroup :: groupsOfWithStep size step xs_
-        else
-            []
-
-
-
---
--- The following two functions are from Maybe.Extra
---
-
-
-traverse : (a -> Maybe b) -> List a -> Maybe (List b)
-traverse f =
-    let
-        step e acc =
-            case f e of
-                Nothing ->
-                    Nothing
-
-                Just x ->
-                    Maybe.map ((::) x) acc
-    in
-        List.foldr step (Just [])
-
-
-{-| Take a list of `Maybe`s and return a `Maybe` with a list of values. `combine == traverse identity`.
-combine [] == Just []
-combine [ Just 1, Just 2, Just 3 ] == Just [ 1, 2, 3 ]
-combine [ Just 1, Nothing, Just 3 ] == Nothing
--}
-combine : List (Maybe a) -> Maybe (List a)
-combine =
-    traverse identity
+    String.toList str |> byteListOfStringEncoder [] |> Maybe.map Encode.sequence
