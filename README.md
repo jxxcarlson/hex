@@ -1,10 +1,10 @@
-# Hex
+# Hex.Bytes
 
-Hex is a small package for working with `elm/bytes`.
+Hex.Bytes is a small package for working with `elm/bytes`.
 It exposes three functions.
 
-- `fromBytes : Bytes -> String`
-- `toBytes : String -> Maybe Bytes`
+- `from : Bytes -> String`
+- `to : String -> Maybe Bytes`
 - `stringBlocks : Int -> String -> List String`
 
 The first function gives a hexadecimal representation of a Bytes, value, e.g.,
@@ -15,39 +15,39 @@ for viewing long strings as blocks of shorter strings.
 
 ## Examples
 
-`Hex.toBytes "FF66" |> Maybe.map Hex.fromBytes == Just "FF66"`
+`Hex.Bytes.to "FF66" |> Maybe.map Hex.Bytes.from == Just "FF66"`
 
 ```
 $ elm repl
-> import Hex exposing(..)
+> import Hex.Bytes exposing(..)
 > import Bytes.Encode as Encode exposing(encode)
 
-> encode (Encode.string "Hello") |> Hex.fromBytes
+> encode (Encode.string "Hello") |> Hex.Bytes.from
 "48656C6C6F" : String
 
-> Hex.toBytes "FF66" |> Maybe.map Hex.fromBytes
+> Hex.Bytes.to "FF66" |> Maybe.map Hex.Bytes.from
 Just "FF66" : Maybe String
 
-> Hex.toBytes "FF66!!" |> Maybe.map Hex.fromBytes
+> Hex.Bytes.to "FF66!!" |> Maybe.map Hex.Bytes.from
 Nothing : Maybe String
 
-> "abcdefghijklmnopqrstuvwx1234" |> Hex.stringBlocks 4
+> "abcdefghijklmnopqrstuvwx1234" |> Hex.Bytes.stringBlocks 4
 ["abcd","efgh","ijkl","mnop","qrst","uvwx","1234"]
 ```
 
 ## Notes
 
-The function `Hex.toBytes` is case-insensitive
+The function `Hex.Bytes.to` is case-insensitive
 
 ```
- > Hex.toBytes "ff66" |> Maybe.map Hex.fromBytes
+ > Hex.Bytes.to "ff66" |> Maybe.map Hex.Bytes.from
 Just "FF66"
 ```
 
-If you prefer lower-case output from `Hex.fromBytes`,
+If you prefer lower-case output from `Hex.Bytes.from`,
 you can do as in this example:
 
 ```
-> Hex.toBytes "ff66" |> Maybe.map Hex.fromBytes |> Maybe.map String.toLower
+> Hex.Bytes.to "ff66" |> Maybe.map Hex.Bytes.from |> Maybe.map String.toLower
 Just "ff66" : Maybe String
 ```

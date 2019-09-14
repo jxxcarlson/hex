@@ -12,7 +12,7 @@ just given and returns a value of type `Maybe Bytes`. Such a function
 call can fail, e.g., on an input `"6A45F!"`. The third is used
 to "format" output into blocks.
 
-@docs fromBytes, toBytes, stringBlocks
+@docs from, to, stringBlocks
 
 -}
 
