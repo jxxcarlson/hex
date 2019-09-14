@@ -3,7 +3,7 @@
     "name": "jxxcarlson/hex",
     "summary": "hex view for bytes",
     "license": "BSD-3-Clause",
-    "version": "2.1.2",
+    "version": "2.1.3",
     "exposed-modules": [
         "Hex"
     ],
