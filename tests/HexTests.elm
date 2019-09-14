@@ -11,25 +11,25 @@ tests =
     describe "A Test Suite"
         [ fuzz hexFuzzer "Round trip test" <|
             \hex ->
-                case Hex.Bytes.toBytes hex of
+                case Hex.Bytes.to hex of
                     Just bytes ->
-                        Hex.Bytes.fromBytes bytes |> String.toLower |> Expect.equal (String.toLower hex)
+                        Hex.Bytes.from bytes |> String.toLower |> Expect.equal (String.toLower hex)
 
                     Nothing ->
                         Expect.fail "Failed to encode hex string."
         , fuzz2 hexFuzzer hexCharFuzzer "Hex.Bytes.toBytes fails with odd number of chars" <|
             \hex extra ->
-                String.cons extra hex |> Hex.Bytes.toBytes |> Expect.equal Nothing
+                String.cons extra hex |> Hex.Bytes.to |> Expect.equal Nothing
         , test "Round trip is stack safe" <|
             \_ ->
                 let
                     longString =
                         String.repeat 1000000 "00"
                 in
-                longString |> Hex.Bytes.toBytes |> Maybe.map Hex.Bytes.fromBytes |> Expect.equal (Just longString)
+                longString |> Hex.Bytes.to |> Maybe.map Hex.Bytes.from |> Expect.equal (Just longString)
         , test "Hex.Bytes.toBytes fails on nonsense text." <|
             \_ ->
-                Hex.Bytes.toBytes "asdf" |> Expect.equal Nothing
+                Hex.Bytes.to "asdf" |> Expect.equal Nothing
         ]
 
 

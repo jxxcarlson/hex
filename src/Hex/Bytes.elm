@@ -1,4 +1,4 @@
-module Hex.Bytes exposing (fromBytes, toBytes, stringBlocks)
+module Hex.Bytes exposing (from, to, stringBlocks)
 
 {-| The Hex package exposes three functions
 
@@ -32,8 +32,8 @@ import List.Extra
 > Nothing : Maybe String
 
 -}
-fromBytes : Bytes -> String
-fromBytes bytes_ =
+from : Bytes -> String
+from bytes_ =
     bytes_
         |> Decode.decode (decodeBytes (Bytes.width bytes_) Decode.unsignedInt8)
         |> Maybe.map (List.reverse >> List.map hexStringOfInt >> String.join "")
@@ -42,8 +42,8 @@ fromBytes bytes_ =
 
 {-| Hex.toBytes "FF66" |> Maybe.map Hex.fromBytes == Just "FF66"
 -}
-toBytes : String -> Maybe Bytes
-toBytes str =
+to : String -> Maybe Bytes
+to str =
     Maybe.map encode (toBytesEncoder str)
 
 
