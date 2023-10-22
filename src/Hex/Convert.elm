@@ -1,7 +1,7 @@
-module Hex.Convert exposing (toString, toBytes, blocks)
+module Hex.Convert exposing (toBytes, toString, blocks)
 
 {-| The `Hex.Convert` package converts `Bytes` values to and from `String`
-values.  Three functions are exposed:
+values. Three functions are exposed:
 
   - `toString : Bytes -> String`
   - `toBytes : String -> Maybe Bytes`
@@ -24,8 +24,7 @@ import Bytes.Decode as Decode exposing (Decoder, Step(..), loop, map, succeed)
 import Bytes.Encode as Encode exposing (encode)
 
 
-{-|
-Do `import Bytes.Encode as Encode exposing(encode)`.  Then
+{-| Do `import Bytes.Encode as Encode exposing(encode)`. Then
 
     encode (Encode.string "Hello")
         |> Hex.Convert.toString
@@ -45,16 +44,18 @@ toString bytes_ =
 
 
 {-|
+
     Hex.Convert.toBytes "FF66"
         |> Maybe.map Hex.Convert.toString
     --> Just "FF66"
+
 -}
 toBytes : String -> Maybe Bytes
 toBytes str =
     Maybe.map encode (toBytesEncoder str)
 
 
-{-|  The `blocks` function is a general-purpose
+{-| The `blocks` function is a general-purpose
 string utility which divides a string into blocks
 of characters, that is, a list of strings:
 
