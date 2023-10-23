@@ -1,7 +1,7 @@
-module Hex.Convert exposing (toString, toBytes, blocks)
+module Hex.Convert exposing (toBytes, toString, blocks)
 
 {-| The `Hex.Convert` package converts `Bytes` values to and from `String`
-values.  Three functions are exposed:
+values. Three functions are exposed:
 
   - `toString : Bytes -> String`
   - `toBytes : String -> Maybe Bytes`
@@ -22,11 +22,9 @@ of `toString` into blocks of a given number of characters.
 import Bytes exposing (Bytes, Endianness(..))
 import Bytes.Decode as Decode exposing (Decoder, Step(..), loop, map, succeed)
 import Bytes.Encode as Encode exposing (encode)
-import List.Extra
 
 
-{-|
-Do `import Bytes.Encode as Encode exposing(encode)`.  Then
+{-| Do `import Bytes.Encode as Encode exposing(encode)`. Then
 
     encode (Encode.string "Hello")
         |> Hex.Convert.toString
@@ -46,16 +44,18 @@ toString bytes_ =
 
 
 {-|
+
     Hex.Convert.toBytes "FF66"
         |> Maybe.map Hex.Convert.toString
     --> Just "FF66"
+
 -}
 toBytes : String -> Maybe Bytes
 toBytes str =
     Maybe.map encode (toBytesEncoder str)
 
 
-{-|  The `blocks` function is a general-purpose
+{-| The `blocks` function is a general-purpose
 string utility which divides a string into blocks
 of characters, that is, a list of strings:
 
@@ -67,7 +67,7 @@ blocks : Int -> String -> List String
 blocks blockSize str =
     str
         |> String.split ""
-        |> List.Extra.groupsOf blockSize
+        |> groupsOf blockSize
         |> List.map (String.join "")
 
 
@@ -250,3 +250,65 @@ byteListOfStringEncoder list charList =
 toBytesEncoder : String -> Maybe Encode.Encoder
 toBytesEncoder str =
     String.toList str |> byteListOfStringEncoder [] |> Maybe.map Encode.sequence
+
+
+{-| Split list into groups of length `size`. If there are not enough elements
+to completely fill the last group, it will not be included. This is equivalent
+to calling `groupsOfWithStep` with the same `size` and `step`.
+
+    groupsOf 3 (List.range 1 10)
+    --> [ [ 1, 2, 3 ], [ 4, 5, 6 ], [ 7, 8, 9 ] ]
+
+-}
+groupsOf : Int -> List a -> List (List a)
+groupsOf size xs =
+    groupsOfWithStep size size xs
+
+
+{-| Split list into groups of length `size` at offsets `step` apart. If there
+are not enough elements to completely fill the last group, it will not be
+included.
+
+    groupsOfWithStep 4 4 (List.range 1 10)
+    --> [ [ 1, 2, 3, 4 ], [ 5, 6, 7, 8 ] ]
+
+    groupsOfWithStep 3 1 (List.range 1 5)
+    --> [ [ 1, 2, 3 ], [ 2, 3, 4 ], [ 3, 4, 5 ] ]
+
+    groupsOfWithStep 3 6 (List.range 1 20)
+    --> [ [ 1, 2, 3 ], [ 7, 8, 9 ], [ 13, 14, 15 ] ]
+
+If `step == size`, every element (except for perhaps the last few due to the
+non-greedy behavior) will appear in exactly one group. If `step < size`, there
+will be an overlap between groups. If `step > size`, some elements will be
+skipped and not appear in any groups.
+
+-}
+groupsOfWithStep : Int -> Int -> List a -> List (List a)
+groupsOfWithStep size step list =
+    if size <= 0 || step <= 0 then
+        []
+
+    else
+        let
+            go : List a -> List (List a) -> List (List a)
+            go xs acc =
+                if List.isEmpty xs then
+                    List.reverse acc
+
+                else
+                    let
+                        thisGroup =
+                            List.take size xs
+                    in
+                    if size == List.length thisGroup then
+                        let
+                            rest =
+                                List.drop step xs
+                        in
+                        go rest (thisGroup :: acc)
+
+                    else
+                        List.reverse acc
+        in
+        go list []
